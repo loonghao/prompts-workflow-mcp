@@ -1,0 +1,48 @@
+# Source files
+src/
+tests/
+test/
+*.test.ts
+*.spec.ts
+
+# Development files
+.eslintrc.js
+.prettierrc
+tsconfig.json
+jest.config.js
+.github/
+.vscode/
+.idea/
+
+# Documentation (except README and examples)
+docs/
+*.md
+!README.md
+!README_zh.md
+!CHANGELOG.md
+
+# Build artifacts
+*.tsbuildinfo
+coverage/
+.nyc_output
+
+# Environment files
+.env*
+
+# Logs
+logs/
+*.log
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/

@@ -1,0 +1,114 @@
+# Global Configuration Example
+# Save this file as ~/.prompts-workflow/config.yaml
+
+global:
+  # Path where global workflow templates are stored
+  templates_path: "~/.prompts-workflow/templates"
+  
+  # Default timeout for workflow execution (5 minutes)
+  default_timeout: 300000
+  
+  # Automatically clean up temporary files after execution
+  auto_cleanup: true
+
+# Logging configuration
+logging:
+  level: "info"           # debug, info, warn, error
+  format: "text"          # text, json
+  outputs: ["console"]    # console, file
+  file_logging: false
+  # log_file: "~/.prompts-workflow/logs/workflow.log"
+
+# Integration settings
+integrations:
+  # GitHub integration
+  github:
+    auto_clean_augment_descriptions: true
+    default_branch: "main"
+    # token: "your-github-token"  # Optional: set via environment variable
+    # repository:
+    #   owner: "your-username"
+    #   name: "your-repo"
+  
+  # Docker integration (optional)
+  # docker:
+  #   default_image: "node:18-alpine"
+  #   registry:
+  #     url: "https://registry.hub.docker.com"
+
+# Project type detection rules
+project_detection:
+  javascript:
+    files: ["package.json", "yarn.lock", "pnpm-lock.yaml"]
+    patterns: ["*.js", "*.ts", "*.jsx", "*.tsx"]
+    default_workflows: ["create-pr", "run-tests", "deploy-staging"]
+  
+  python:
+    files: ["pyproject.toml", "requirements.txt", "setup.py", "Pipfile"]
+    patterns: ["*.py"]
+    default_workflows: ["create-pr", "run-tests", "publish-package"]
+  
+  rust:
+    files: ["Cargo.toml"]
+    patterns: ["*.rs"]
+    default_workflows: ["create-pr", "run-tests", "release"]
+  
+  go:
+    files: ["go.mod", "go.sum"]
+    patterns: ["*.go"]
+    default_workflows: ["create-pr", "run-tests", "build"]
+
+# Security configuration
+security:
+  # Run commands in sandbox mode
+  sandbox_mode: true
+  
+  # Maximum execution time for any single workflow (1 hour)
+  max_execution_time: 3600000
+  
+  # Commands that are allowed to execute
+  allowed_commands:
+    - "npm"
+    - "yarn"
+    - "pnpm"
+    - "node"
+    - "python"
+    - "python3"
+    - "pip"
+    - "poetry"
+    - "cargo"
+    - "rustc"
+    - "go"
+    - "git"
+    - "docker"
+    - "kubectl"
+  
+  # Commands that are explicitly blocked
+  blocked_commands:
+    - "rm"
+    - "del"
+    - "format"
+    - "fdisk"
+    - "dd"
+    - "mkfs"
+    - "sudo"
+    - "su"
+  
+  # Environment variable restrictions
+  env_restrictions:
+    # Variables that are allowed to be set
+    allowed_vars:
+      - "NODE_ENV"
+      - "PYTHON_PATH"
+      - "CARGO_TARGET_DIR"
+      - "GOOS"
+      - "GOARCH"
+      - "CI"
+      - "GITHUB_TOKEN"
+    
+    # Variables that should never be passed through
+    blocked_vars:
+      - "HOME"
+      - "USER"
+      - "PATH"
+      - "SSH_AUTH_SOCK"

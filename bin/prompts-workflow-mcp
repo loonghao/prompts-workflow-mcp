@@ -1,0 +1,34 @@
+#!/usr/bin/env node
+
+const path = require('path');
+const { spawn } = require('child_process');
+
+// Get the directory where this script is located
+const binDir = __dirname;
+// Get the package root directory (one level up from bin)
+const packageDir = path.dirname(binDir);
+// Path to the compiled CLI entry point
+const cliPath = path.join(packageDir, 'dist', 'cli', 'index.js');
+
+// Check if the compiled CLI exists
+const fs = require('fs');
+if (!fs.existsSync(cliPath)) {
+  console.error('Error: CLI not found. Please run "npm run build" first.');
+  process.exit(1);
+}
+
+// Forward all arguments to the CLI
+const args = process.argv.slice(2);
+const child = spawn('node', [cliPath, ...args], {
+  stdio: 'inherit',
+  cwd: process.cwd()
+});
+
+child.on('exit', (code) => {
+  process.exit(code || 0);
+});
+
+child.on('error', (err) => {
+  console.error('Error starting CLI:', err.message);
+  process.exit(1);
+});

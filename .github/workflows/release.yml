@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      id-token: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        registry-url: 'https://registry.npmjs.org'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run full validation
+      run: npm run validate
+    
+    - name: Build package
+      run: npm run build
+    
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+    
+    - name: Update package.json version
+      run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
+    
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ steps.version.outputs.VERSION }}
+        body: |
+          ## Changes in ${{ steps.version.outputs.VERSION }}
+          
+          See [CHANGELOG.md](./CHANGELOG.md) for detailed changes.
+          
+          ## Installation
+          
+          ```bash
+          npm install -g prompts-workflow-mcp@${{ steps.version.outputs.VERSION }}
+          ```
+          
+          ## Quick Start
+          
+          ```bash
+          # List available workflows
+          prompts-workflow-mcp list
+          
+          # Validate a workflow
+          prompts-workflow-mcp validate my-workflow.yaml
+          
+          # Start MCP server
+          prompts-workflow-mcp server
+          ```
+        draft: false
+        prerelease: false
+    
+    - name: Publish to npm
+      run: npm publish --provenance
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    
+    - name: Create dist archive
+      run: |
+        tar -czf prompts-workflow-mcp-${{ steps.version.outputs.VERSION }}.tar.gz \
+          dist/ \
+          templates/ \
+          schemas/ \
+          examples/ \
+          README.md \
+          README_zh.md \
+          CHANGELOG.md \
+          LICENSE \
+          package.json
+    
+    - name: Upload release assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./prompts-workflow-mcp-${{ steps.version.outputs.VERSION }}.tar.gz
+        asset_name: prompts-workflow-mcp-${{ steps.version.outputs.VERSION }}.tar.gz
+        asset_content_type: application/gzip
