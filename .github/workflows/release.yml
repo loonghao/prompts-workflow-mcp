@@ -2,93 +2,47 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+      - beta
+  workflow_dispatch:
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+
     permissions:
       contents: write
       id-token: write
-    
+      issues: write
+      pull-requests: write
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
+        token: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
         cache: 'npm'
         registry-url: 'https://registry.npmjs.org'
-    
+
     - name: Install dependencies
       run: npm ci
-    
-    - name: Run full validation
-      run: npm run validate
-    
+
+    - name: Run tests with coverage
+      run: npm test -- --coverage
+
     - name: Build package
       run: npm run build
-    
-    - name: Extract version from tag
-      id: version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-    
-    - name: Update package.json version
-      run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
-    
-    - name: Create dist archive
-      run: |
-        tar -czf prompts-workflow-mcp-${{ steps.version.outputs.VERSION }}.tar.gz \
-          dist/ \
-          templates/ \
-          schemas/ \
-          examples/ \
-          README.md \
-          README_zh.md \
-          CHANGELOG.md \
-          LICENSE \
-          package.json
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: ${{ github.ref }}
-        name: Release ${{ steps.version.outputs.VERSION }}
-        body: |
-          ## Changes in ${{ steps.version.outputs.VERSION }}
-
-          See [CHANGELOG.md](./CHANGELOG.md) for detailed changes.
-
-          ## Installation
-
-          ```bash
-          npm install -g prompts-workflow-mcp@${{ steps.version.outputs.VERSION }}
-          ```
-
-          ## Quick Start
-
-          ```bash
-          # List available workflows
-          prompts-workflow-mcp list
-
-          # Validate a workflow
-          prompts-workflow-mcp validate my-workflow.yaml
-
-          # Start MCP server
-          prompts-workflow-mcp server
-          ```
-        files: |
-          prompts-workflow-mcp-${{ steps.version.outputs.VERSION }}.tar.gz
-        draft: false
-        prerelease: false
-    
-    - name: Publish to npm
-      run: npm publish --provenance
+    - name: Semantic Release
+      run: npx semantic-release
       env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

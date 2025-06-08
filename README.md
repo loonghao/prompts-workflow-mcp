@@ -12,12 +12,13 @@ An intelligent MCP (Model Context Protocol) server that enables AI assistants to
 ## 🚀 Features
 
 - **Natural Language Workflow Execution**: Execute workflows with simple commands like `/workflow create-pr`
-- **Hierarchical Configuration**: Support for both global and project-specific workflows
+- **Intelligent Project Detection**: Automatically detects project type (JavaScript, Python, Rust, Go) and suggests relevant workflows
+- **Hierarchical Configuration**: Support for both global and project-specific workflows with inheritance
+- **Template System**: Built-in language-specific templates that can be customized and overridden
 - **Markdown-based Definitions**: Define workflows using intuitive Markdown format
-- **Project Type Detection**: Automatically detect and suggest workflows based on project type
 - **MCP Protocol Integration**: Seamless integration with AI assistants through MCP
 - **CLI Support**: Command-line interface for workflow management
-- **Template System**: Built-in templates for common development scenarios
+- **Flexible Override System**: Project-level workflows can override global templates
 
 ## 📦 Installation
 
@@ -59,6 +60,82 @@ npx prompts-workflow-mcp create my-workflow
 npx prompts-workflow-mcp serve
 ```
 
+## 🎯 Design Philosophy
+
+### Intelligent Workflow Management
+
+Prompts Workflow MCP follows a **smart defaults with flexible overrides** approach:
+
+#### 1. **Automatic Project Detection**
+- Detects project type based on files (`package.json`, `pyproject.toml`, `Cargo.toml`, `go.mod`)
+- Analyzes file patterns (`*.js`, `*.py`, `*.rs`, `*.go`) for confidence scoring
+- Suggests relevant workflows automatically
+
+#### 2. **Hierarchical Workflow System**
+```
+Global Templates (Built-in)
+├── templates/javascript/create-pr.yaml
+├── templates/python/create-pr.yaml
+├── templates/rust/create-pr.yaml
+└── templates/go/create-pr.yaml
+
+Project-Level Overrides (Customizable)
+├── .prompts-workflow/workflows/create-pr.yaml  # Overrides global
+├── .prompts-workflow/workflows/custom-deploy.yaml  # Project-specific
+└── .prompts-workflow/config.yaml  # Project configuration
+```
+
+#### 3. **Smart Workflow Resolution**
+When you run `/workflow create-pr`:
+1. **Project Detection**: Identifies project as Python (finds `pyproject.toml`)
+2. **Template Selection**: Loads `templates/python/create-pr.yaml`
+3. **Override Check**: Looks for `.prompts-workflow/workflows/create-pr.yaml`
+4. **Execution**: Uses project override if exists, otherwise uses global template
+
+#### 4. **Customization Levels**
+
+**Level 1: Use Built-in Templates**
+```bash
+# Just works out of the box
+/workflow create-pr
+```
+
+**Level 2: Override Parameters**
+```yaml
+# .prompts-workflow/config.yaml
+workflows:
+  create-pr:
+    parameters:
+      pr_title: "feat: automated changes"
+      run_tests: false
+```
+
+**Level 3: Custom Workflow**
+```yaml
+# .prompts-workflow/workflows/create-pr.yaml
+name: "create-pr"
+description: "Custom PR workflow for our team"
+extends: "templates/python/create-pr"  # Inherit from global
+steps:
+  - name: "Custom linting"
+    type: "command"
+    command: "our-custom-linter"
+  # ... rest inherited from global template
+```
+
+**Level 4: Completely Custom**
+```yaml
+# .prompts-workflow/workflows/deploy-staging.yaml
+name: "deploy-staging"
+description: "Deploy to staging environment"
+scope: "project"
+steps:
+  - name: "Build Docker image"
+    type: "command"
+    command: "docker build -t myapp:staging ."
+  # ... custom deployment steps
+```
+
 ## 🔧 MCP Configuration
 
 Add to your MCP client configuration:
@@ -77,36 +154,139 @@ Add to your MCP client configuration:
 }
 ```
 
+## 💡 Usage Examples
+
+### Example 1: First Time Usage (JavaScript Project)
+
+```bash
+# In a JavaScript project directory
+$ ls
+package.json  src/  tests/  README.md
+
+# List available workflows (auto-detects JavaScript)
+$ npx prompts-workflow-mcp list
+Available workflows for JavaScript project:
+  ✓ create-pr - Create a pull request with automated checks
+  ✓ run-tests - Run test suite with coverage
+  ✓ deploy - Deploy to production
+
+# Execute the create-pr workflow
+$ npx prompts-workflow-mcp execute create-pr
+🔍 Detected: JavaScript project
+📋 Using template: templates/javascript/create-pr.yaml
+🚀 Executing workflow...
+  ✓ Install dependencies (npm install)
+  ✓ Run linter (npm run lint)
+  ✓ Run tests (npm test)
+  ✓ Build project (npm run build)
+  ✓ Create PR (github.create_pr)
+✅ Workflow completed successfully!
+```
+
+### Example 2: Customizing a Workflow
+
+```bash
+# Create project-specific override
+$ npx prompts-workflow-mcp create create-pr
+📝 Created: .prompts-workflow/workflows/create-pr.yaml
+
+# Edit the workflow to add custom steps
+$ cat .prompts-workflow/workflows/create-pr.yaml
+```
+
+```yaml
+name: "create-pr"
+description: "Custom PR workflow with security scan"
+extends: "templates/javascript/create-pr"
+version: "1.1.0"
+scope: "project"
+
+# Override parameters
+parameters:
+  - name: "pr_title"
+    default: "feat: automated PR with security scan"
+
+# Add custom steps before the inherited ones
+steps:
+  - name: "Security scan"
+    type: "command"
+    command: "npm audit --audit-level=moderate"
+    continue_on_error: false
+
+  - name: "Dependency check"
+    type: "command"
+    command: "npm outdated"
+    continue_on_error: true
+
+# The rest of the steps are inherited from the global template
+```
+
+### Example 3: Multi-Language Project
+
+```bash
+# In a project with multiple languages
+$ ls
+package.json  pyproject.toml  Cargo.toml  src/
+
+$ npx prompts-workflow-mcp list
+Available workflows for Multi-language project:
+  📦 JavaScript workflows:
+    ✓ js-create-pr - JavaScript PR workflow
+    ✓ js-test - JavaScript testing
+  🐍 Python workflows:
+    ✓ py-create-pr - Python PR workflow
+    ✓ py-lint - Python linting
+  🦀 Rust workflows:
+    ✓ rust-create-pr - Rust PR workflow
+    ✓ rust-build - Rust building
+
+# Execute language-specific workflow
+$ npx prompts-workflow-mcp execute py-create-pr
+```
+
 ## 📝 Workflow Definition Format
 
-Workflows are defined using Markdown format:
+Workflows are defined using YAML format with Markdown documentation support:
 
-```markdown
-# Workflow: create-pr
+```yaml
+name: "create-pr"
+description: "Create a pull request with automated checks"
+version: "1.0.0"
+scope: "global"  # or "project"
+tags: ["git", "testing", "ci"]
 
-**Description**: Create a pull request with automated checks
-**Version**: 1.0.0
-**Scope**: project
-**Tags**: git, testing, ci
+parameters:
+  - name: "pr_title"
+    description: "Title for the pull request"
+    type: "string"
+    required: false
+    default: "feat: automated PR creation"
 
-## Steps
+steps:
+  - name: "Run linter"
+    type: "command"
+    command: "npm run lint"
+    continue_on_error: false
+    timeout: 60000
 
-### 1. Run linter
-- **Type**: command
-- **Command**: `npm run lint`
-- **Continue on error**: false
+  - name: "Run tests"
+    type: "command"
+    command: "npm test"
+    continue_on_error: false
 
-### 2. Run tests
-- **Type**: command
-- **Command**: `npm test`
-- **Continue on error**: false
+  - name: "Create PR"
+    type: "action"
+    action: "github.create_pr"
+    parameters:
+      title: "{{ pr_title }}"
+      description: "{{ pr_description }}"
+      auto_clean_augment: true
 
-### 3. Create PR
-- **Type**: action
-- **Action**: github.create_pr
-- **Parameters**:
-  - title: "{{ pr_title }}"
-  - description: "{{ pr_description }}"
+environment:
+  NODE_ENV: "test"
+  CI: "true"
+
+timeout: 600000
 ```
 
 ## 🏗️ Project Structure
