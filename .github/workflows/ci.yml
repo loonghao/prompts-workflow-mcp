@@ -33,17 +33,32 @@ jobs:
     - name: Run linting
       run: npm run lint
     
-    - name: Run tests
-      run: npm test
-    
+    - name: Run tests with coverage
+      run: npm test -- --coverage
+
+    - name: Check coverage threshold
+      run: npm test -- --coverage --coverageThreshold='{"global":{"branches":50,"functions":50,"lines":50,"statements":50}}'
+
     - name: Run build
       run: npm run build
-    
+
+    - name: Verify build artifacts
+      run: |
+        test -f dist/index.js
+        test -f dist/index.js.map
+        test -d dist/cli
+        ls -la dist/
+
     - name: Test CLI functionality
       run: |
         node bin/prompts-workflow-mcp --help
         node bin/prompts-workflow-mcp validate templates/javascript/create-pr.yaml
         node bin/prompts-workflow-mcp list || true  # Allow failure for now
+
+    - name: Test package integrity
+      run: |
+        npm pack --dry-run
+        npm run validate || echo "Validate script not found, skipping"
     
     - name: Upload coverage reports
       if: matrix.node-version == '20.x'

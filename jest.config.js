@@ -29,7 +29,7 @@ module.exports = {
       statements: 50
     }
   },
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   setupFilesAfterEnv: [],
