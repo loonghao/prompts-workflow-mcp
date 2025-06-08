@@ -1,0 +1,83 @@
+# Project Configuration Example
+# Save this file as .prompts-workflow/config.yaml in your project root
+
+project:
+  name: "my-awesome-project"
+  type: "javascript"  # javascript, python, rust, go, or custom
+
+# Project-specific workflows
+workflows:
+  # Extend the global create-pr workflow with custom parameters
+  create-pr:
+    extends: "global:javascript/create-pr"
+    parameters:
+      pr_template: ".github/pull_request_template.md"
+      auto_assign: true
+    environment:
+      NODE_ENV: "test"
+      SKIP_PREFLIGHT_CHECK: "true"
+    timeout: 600000  # 10 minutes
+  
+  # Custom deployment workflow
+  deploy-staging:
+    parameters:
+      environment: "staging"
+      health_check_url: "https://staging.example.com/health"
+    steps:
+      - name: "Build application"
+        type: "command"
+        command: "npm run build:staging"
+        timeout: 300000
+      
+      - name: "Run tests"
+        type: "command"
+        command: "npm run test:staging"
+        continue_on_error: false
+      
+      - name: "Deploy to staging"
+        type: "action"
+        action: "deploy.staging"
+        parameters:
+          environment: "{{ environment }}"
+          health_check: "{{ health_check_url }}"
+  
+  # Quick test workflow
+  quick-test:
+    steps:
+      - name: "Install dependencies"
+        type: "command"
+        command: "npm ci"
+        timeout: 120000
+      
+      - name: "Run unit tests"
+        type: "command"
+        command: "npm run test:unit"
+        timeout: 180000
+      
+      - name: "Run linter"
+        type: "command"
+        command: "npm run lint"
+        continue_on_error: true
+
+# Project-specific environment variables
+environment:
+  NODE_ENV: "development"
+  DEBUG: "app:*"
+  API_BASE_URL: "http://localhost:3001"
+  DATABASE_URL: "postgresql://localhost:5432/myapp_dev"
+
+# Override global integrations for this project
+integrations:
+  github:
+    auto_clean_augment_descriptions: false  # Keep Augment descriptions for this project
+    repository:
+      owner: "my-org"
+      name: "my-awesome-project"
+
+# Project metadata
+metadata:
+  team: "frontend"
+  maintainer: "john.doe@example.com"
+  documentation: "https://docs.example.com/my-awesome-project"
+  slack_channel: "#my-awesome-project"
+  jira_project: "MAP"

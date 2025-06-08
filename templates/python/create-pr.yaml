@@ -1,0 +1,68 @@
+name: "create-pr"
+description: "Create a pull request with automated checks for Python projects"
+version: "1.0.0"
+scope: "global"
+tags: ["python", "pr", "ci"]
+
+parameters:
+  - name: "pr_title"
+    description: "Title for the pull request"
+    type: "string"
+    required: false
+    default: "feat: automated PR creation"
+  - name: "pr_description"
+    description: "Description for the pull request"
+    type: "string"
+    required: false
+    default: "Automated PR created by prompts-workflow-mcp"
+
+steps:
+  - name: "Install dependencies"
+    type: "command"
+    command: "pip install -r requirements.txt"
+    continue_on_error: false
+    timeout: 120000
+
+  - name: "Format code"
+    type: "command"
+    command: "black ."
+    continue_on_error: true
+    timeout: 60000
+
+  - name: "Run linter"
+    type: "command"
+    command: "ruff check ."
+    continue_on_error: false
+    timeout: 60000
+
+  - name: "Run tests"
+    type: "command"
+    command: "pytest"
+    continue_on_error: false
+    timeout: 300000
+
+  - name: "Type checking"
+    type: "command"
+    command: "mypy ."
+    continue_on_error: true
+    timeout: 60000
+
+  - name: "Create PR"
+    type: "action"
+    action: "github.create_pr"
+    parameters:
+      title: "{{ pr_title }}"
+      description: "{{ pr_description }}"
+      auto_clean_augment: true
+    continue_on_error: false
+
+environment:
+  PYTHONPATH: "."
+  CI: "true"
+
+timeout: 600000
+
+metadata:
+  author: "prompts-workflow-mcp"
+  category: "ci-cd"
+  documentation: "https://github.com/yourusername/prompts-workflow-mcp#python-workflows"
