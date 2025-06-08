@@ -1,6 +1,7 @@
 # Prompts Workflow MCP
 
 [![npm version](https://badge.fury.io/js/prompts-workflow-mcp.svg)](https://badge.fury.io/js/prompts-workflow-mcp)
+[![CI](https://github.com/loonghao/prompts-workflow-mcp/workflows/CI/badge.svg)](https://github.com/loonghao/prompts-workflow-mcp/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
