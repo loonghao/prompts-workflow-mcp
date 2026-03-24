@@ -1,0 +1,70 @@
+# Simple Workflow Example
+# This is a basic example showing how to create a workflow
+
+name: "hello-world"
+description: "A simple hello world workflow for demonstration"
+version: "1.0.0"
+scope: "project"
+tags: ["example", "demo", "hello-world"]
+
+# Optional parameters that can be passed to the workflow
+parameters:
+  - name: "name"
+    description: "Name to greet"
+    type: "string"
+    required: false
+    default: "World"
+  
+  - name: "language"
+    description: "Language for greeting"
+    type: "string"
+    required: false
+    default: "en"
+    enum: ["en", "es", "fr", "de", "zh"]
+
+# Workflow steps
+steps:
+  - name: "Print greeting"
+    type: "command"
+    command: "echo 'Hello, {{ name }}!'"
+    continue_on_error: false
+    timeout: 5000
+  
+  - name: "Show current directory"
+    type: "command"
+    command: "pwd"
+    continue_on_error: true
+  
+  - name: "List files"
+    type: "command"
+    command: "ls -la"
+    continue_on_error: true
+  
+  - name: "Custom action example"
+    type: "action"
+    action: "demo.log_message"
+    parameters:
+      message: "Workflow executed successfully!"
+      level: "info"
+    continue_on_error: true
+
+# Environment variables for the workflow
+environment:
+  DEMO_MODE: "true"
+  WORKFLOW_NAME: "{{ name }}"
+
+# Global timeout for the entire workflow (5 minutes)
+timeout: 300000
+
+# Retry configuration
+retry:
+  max_attempts: 2
+  delay: 1000
+  backoff: "linear"
+
+# Workflow metadata
+metadata:
+  author: "prompts-workflow-mcp"
+  category: "examples"
+  documentation: "https://github.com/loonghao/prompts-workflow-mcp/examples"
+  created_at: "2024-01-15T00:00:00Z"

@@ -1,0 +1,62 @@
+name: "create-pr"
+description: "Create a pull request with automated checks for JavaScript projects"
+version: "1.0.0"
+scope: "global"
+tags: ["javascript", "pr", "ci"]
+
+parameters:
+  - name: "pr_title"
+    description: "Title for the pull request"
+    type: "string"
+    required: false
+    default: "feat: automated PR creation"
+  - name: "pr_description"
+    description: "Description for the pull request"
+    type: "string"
+    required: false
+    default: "Automated PR created by prompts-workflow-mcp"
+
+steps:
+  - name: "Install dependencies"
+    type: "command"
+    command: "npm install"
+    continue_on_error: false
+    timeout: 120000
+
+  - name: "Run linter"
+    type: "command"
+    command: "npm run lint"
+    continue_on_error: false
+    timeout: 60000
+
+  - name: "Run tests"
+    type: "command"
+    command: "npm test"
+    continue_on_error: false
+    timeout: 300000
+
+  - name: "Build project"
+    type: "command"
+    command: "npm run build"
+    continue_on_error: true
+    timeout: 180000
+
+  - name: "Create PR"
+    type: "action"
+    action: "github.create_pr"
+    parameters:
+      title: "{{ pr_title }}"
+      description: "{{ pr_description }}"
+      auto_clean_augment: true
+    continue_on_error: false
+
+environment:
+  NODE_ENV: "test"
+  CI: "true"
+
+timeout: 600000
+
+metadata:
+  author: "prompts-workflow-mcp"
+  category: "ci-cd"
+  documentation: "https://github.com/yourusername/prompts-workflow-mcp#javascript-workflows"
